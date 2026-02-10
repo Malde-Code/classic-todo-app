@@ -173,49 +173,98 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 200);
     }
 
-    // Edit Todo (Inline)
-    function editTodo(id, spanElement) {
-        const currentText = spanElement.textContent;
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = currentText;
-        input.className = 'edit-input';
-        // Inline style for the edit input to match look
-        input.style.width = '100%';
-        input.style.padding = '4px 8px';
-        input.style.borderRadius = '6px';
-        input.style.border = '1px solid #38bdf8';
-        input.style.background = 'rgba(15, 23, 42, 0.8)';
-        input.style.color = 'white';
-        input.style.fontSize = '15px';
+    // Edit Todo (Advanced Full Row)
+    function editTodo(id, textSpan) {
+        const todo = todos.find(t => t.id === id);
+        if (!todo) return;
 
-        // Replace span with input
-        spanElement.replaceWith(input);
-        input.focus();
+        const li = textSpan.closest('li');
+        const originalContent = li.innerHTML;
+        const originalClass = li.className;
 
-        let isSaved = false;
+        li.classList.add('editing');
+        li.innerHTML = `
+            <div class="edit-form">
+                <input type="text" class="edit-input-text" value="${escapeHtml(todo.text)}" placeholder="Task name">
+                <div class="edit-meta-group">
+                    <input type="date" class="edit-input-date" value="${todo.dueDate || ''}">
+                    <select class="edit-input-priority">
+                        <option value="low" ${todo.priority === 'low' ? 'selected' : ''}>Low</option>
+                        <option value="medium" ${todo.priority === 'medium' ? 'selected' : ''}>Medium</option>
+                        <option value="high" ${todo.priority === 'high' ? 'selected' : ''}>High</option>
+                    </select>
+                </div>
+                <div class="edit-actions">
+                    <button class="save-btn" aria-label="Save">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>
+                    <button class="cancel-btn" aria-label="Cancel">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            </div>
+        `;
 
-        // Save logic
-        function saveEdit() {
-            if (isSaved) return; // Prevent double save (blur + enter)
-            isSaved = true;
+        const nameInput = li.querySelector('.edit-input-text');
+        const dateInput = li.querySelector('.edit-input-date');
+        const priorityInput = li.querySelector('.edit-input-priority');
+        const saveBtn = li.querySelector('.save-btn');
+        const cancelBtn = li.querySelector('.cancel-btn');
 
-            const newText = input.value.trim();
-            if (newText && newText !== currentText) {
-                todos = todos.map(t => t.id === id ? { ...t, text: newText } : t);
+        nameInput.focus();
+
+        function save() {
+            const newText = nameInput.value.trim();
+            const newDate = dateInput.value;
+            const newPriority = priorityInput.value;
+
+            if (newText) {
+                todos = todos.map(t => t.id === id ? {
+                    ...t,
+                    text: newText,
+                    dueDate: newDate,
+                    priority: newPriority
+                } : t);
                 saveTodos();
+                renderTodos();
             }
-            renderTodos();
         }
 
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                saveEdit();
-            }
+        function cancel() {
+            li.className = originalClass;
+            li.innerHTML = originalContent;
+            // Re-attach listeners since we blew away the innerHTML
+            attachItemListeners(li, todo);
+        }
+
+        saveBtn.addEventListener('click', save);
+        cancelBtn.addEventListener('click', cancel);
+
+        nameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') save();
+        });
+    }
+
+    // Helper to re-attach listeners after cancel
+    function attachItemListeners(li, todo) {
+        const checkbox = li.querySelector('input[type="checkbox"]');
+        checkbox.addEventListener('change', () => toggleTodo(todo.id));
+
+        const editBtn = li.querySelector('.edit-btn');
+        const textSpan = li.querySelector('.todo-text');
+
+        editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            editTodo(todo.id, textSpan);
         });
 
-        // Save on blur
-        input.addEventListener('blur', saveEdit);
+        const deleteBtn = li.querySelector('.delete-btn');
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteTodo(todo.id, li);
+        });
+
+        textSpan.addEventListener('dblclick', () => editTodo(todo.id, textSpan));
     }
 
     // Clear Completed
