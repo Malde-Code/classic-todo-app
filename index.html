@@ -10,51 +10,61 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<!-- touched to trigger rebuild -->
 
 <body>
     <div class="app-container">
-        <header>
-            <h1>Tasks</h1>
-            <p class="date-display" id="dateDisplay"></p>
-        </header>
-
-        <div class="input-group">
-            <input type="text" id="todoInput" placeholder="Add a new task..." autocomplete="off">
-            <input type="date" id="todoDate" aria-label="Due date">
-            <select id="todoPriority" aria-label="Priority">
-                <option value="low">Low</option>
-                <option value="medium" selected>Medium</option>
-                <option value="high">High</option>
-            </select>
-            <button id="addBtn" aria-label="Add task">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-            </button>
+        <!-- User Bar -->
+        <div id="userBar" class="user-bar">
+            <span>Guest Mode</span>
+            <button id="authBtn">Login / Signup</button>
         </div>
 
-        <div class="controls">
+        <header>
+            <h1>Classic To-Do</h1>
+            <div class="input-group">
+                <input type="text" id="todoInput" placeholder="Add a new task...">
+                <input type="date" id="todoDate">
+                <select id="todoPriority">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                </select>
+                <button id="addBtn">Add</button>
+            </div>
             <div class="filters">
                 <button class="filter-btn active" data-filter="all">All</button>
                 <button class="filter-btn" data-filter="active">Active</button>
                 <button class="filter-btn" data-filter="completed">Completed</button>
             </div>
-            <button id="clearCompletedBtn" class="clear-btn">Clear Completed</button>
-        </div>
+            <button id="clearCompletedBtn">Clear Completed</button>
+        </header>
 
-        <ul class="todo-list" id="todoList">
-            <!-- Tasks will be injected here -->
-        </ul>
+        <ul id="todoList"></ul>
 
-        <div class="empty-state" id="emptyState" style="display: none;">
-            <p>No tasks found. Enjoy your day!</p>
+        <div class="empty-state" id="emptyState">
+            <p>No tasks found. Time to relax!</p>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="modalTitle">Login</h2>
+            <form id="authForm">
+                <input type="email" id="authEmail" placeholder="Email" required>
+                <input type="password" id="authPassword" placeholder="Password" required>
+                <button type="submit" id="modalSubmitBtn">Login</button>
+            </form>
+            <p class="switch-auth">
+                <span id="authSwitchText">Don't have an account?</span>
+                <a href="#" id="authSwitchLink">Sign up</a>
+            </p>
+            <button id="closeModalBtn" class="close-btn">&times;</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs & App Logic -->
+    <script type="module" src="app.js"></script>
 </body>
 
 </html>
