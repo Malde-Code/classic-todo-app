@@ -362,6 +362,19 @@ select:focus {
     color: var(--priority-low);
 }
 
+.todo-item-actions {
+    display: flex;
+    gap: 4px;
+    margin-left: 8px;
+    opacity: 0;
+    transition: all var(--transition-speed);
+}
+
+.todo-item:hover .todo-item-actions {
+    opacity: 1;
+}
+
+.edit-btn,
 .delete-btn {
     border: none;
     background: transparent;
@@ -369,13 +382,15 @@ select:focus {
     cursor: pointer;
     padding: 8px;
     border-radius: 6px;
-    margin-left: 8px;
-    opacity: 0;
     transition: all var(--transition-speed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.todo-item:hover .delete-btn {
-    opacity: 1;
+.edit-btn:hover {
+    background: rgba(56, 189, 248, 0.1);
+    color: var(--accent-color);
 }
 
 .delete-btn:hover {
