@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="app-container">
         <header>
@@ -18,8 +20,15 @@
 
         <div class="input-group">
             <input type="text" id="todoInput" placeholder="Add a new task..." autocomplete="off">
+            <input type="date" id="todoDate" aria-label="Due date">
+            <select id="todoPriority" aria-label="Priority">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+            </select>
             <button id="addBtn" aria-label="Add task">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
@@ -38,7 +47,7 @@
         <ul class="todo-list" id="todoList">
             <!-- Tasks will be injected here -->
         </ul>
-        
+
         <div class="empty-state" id="emptyState" style="display: none;">
             <p>No tasks found. Enjoy your day!</p>
         </div>
@@ -46,4 +55,5 @@
 
     <script src="app.js"></script>
 </body>
+
 </html>

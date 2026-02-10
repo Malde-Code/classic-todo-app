@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const todoInput = document.getElementById('todoInput');
+    const todoDate = document.getElementById('todoDate');
+    const todoPriority = document.getElementById('todoPriority');
     const addBtn = document.getElementById('addBtn');
     const todoList = document.getElementById('todoList');
     const filterBtns = document.querySelectorAll('.filter-btn');
@@ -35,12 +37,21 @@ document.addEventListener('DOMContentLoaded', () => {
             filteredTodos = todos.filter(t => t.completed);
         }
 
+        // Sort: Active first, then by priority (High > Medium > Low)
+        const priorityOrder = { high: 0, medium: 1, low: 2 };
+        filteredTodos.sort((a, b) => {
+            if (a.completed !== b.completed) return a.completed - b.completed;
+            const pA = priorityOrder[a.priority] !== undefined ? priorityOrder[a.priority] : 1;
+            const pB = priorityOrder[b.priority] !== undefined ? priorityOrder[b.priority] : 1;
+            return pA - pB;
+        });
+
         if (filteredTodos.length === 0) {
             emptyState.style.display = 'block';
             if (currentFilter !== 'all') {
                 emptyState.querySelector('p').textContent = `No ${currentFilter} tasks.`;
             } else {
-                emptyState.querySelector('p').textContent = "No tasks found. Enjoy your day!";
+                emptyState.querySelector('p').textContent = "No tasks found. Time to relax!";
             }
         } else {
             emptyState.style.display = 'none';
@@ -48,15 +59,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filteredTodos.forEach(todo => {
             const li = document.createElement('li');
-            li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+            li.className = `todo-item ${todo.completed ? 'completed' : ''} priority-${todo.priority || 'medium'}`;
             li.dataset.id = todo.id;
+
+            // Format Date
+            let dateBadge = '';
+            if (todo.dueDate) {
+                const date = new Date(todo.dueDate);
+                // Adjust for timezone offset to show correct date selected
+                const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+                const offsetDate = new Date(date.getTime() + userTimezoneOffset);
+                dateBadge = `<span class="meta-date">${offsetDate.toLocaleDateString()}</span>`;
+            }
 
             li.innerHTML = `
                 <label class="checkbox-wrapper">
                     <input type="checkbox" ${todo.completed ? 'checked' : ''}>
                     <span class="custom-checkbox"></span>
                 </label>
-                <span class="todo-text">${escapeHtml(todo.text)}</span>
+                <div class="todo-content">
+                    <span class="todo-text">${escapeHtml(todo.text)}</span>
+                    <div class="todo-meta">
+                        <span class="meta-priority ${todo.priority || 'medium'}">${todo.priority || 'medium'}</span>
+                        ${dateBadge}
+                    </div>
+                </div>
                 <button class="delete-btn" aria-label="Delete task">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="3 6 5 6 21 6"></polyline>
@@ -71,9 +98,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const deleteBtn = li.querySelector('.delete-btn');
             deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent bubbling if we added click to row
+                e.stopPropagation();
                 deleteTodo(todo.id, li);
             });
+
+            // Double click to edit (Inline)
+            const textSpan = li.querySelector('.todo-text');
+            textSpan.addEventListener('dblclick', () => editTodo(todo.id, textSpan));
 
             todoList.appendChild(li);
         });
@@ -82,16 +113,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add Todo
     function addTodo() {
         const text = todoInput.value.trim();
+        const date = todoDate.value;
+        const priority = todoPriority.value;
+
         if (text) {
             const newTodo = {
                 id: Date.now(),
                 text: text,
+                dueDate: date,
+                priority: priority,
                 completed: false,
                 createdAt: new Date().toISOString()
             };
-            todos.unshift(newTodo); // Add to top
+            todos.unshift(newTodo);
             saveTodos();
             renderTodos();
+
+            // Reset Inputs
             todoInput.value = '';
             todoInput.focus();
         }
@@ -111,13 +149,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Delete Todo
     function deleteTodo(id, element) {
-        // Add fade out animation class if you like
-        element.style.animation = 'fadeOut 0.3s ease-out forwards';
+        element.style.opacity = '0';
+        element.style.transform = 'translateX(20px)';
         setTimeout(() => {
             todos = todos.filter(t => t.id !== id);
             saveTodos();
             renderTodos();
-        }, 300);
+        }, 200);
+    }
+
+    // Edit Todo (Inline)
+    function editTodo(id, spanElement) {
+        const currentText = spanElement.textContent;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentText;
+        input.className = 'edit-input';
+        // Inline style for the edit input to match look
+        input.style.width = '100%';
+        input.style.padding = '4px 8px';
+        input.style.borderRadius = '6px';
+        input.style.border = '1px solid #38bdf8';
+        input.style.background = 'rgba(15, 23, 42, 0.8)';
+        input.style.color = 'white';
+        input.style.fontSize = '15px';
+
+        // Replace span with input
+        spanElement.replaceWith(input);
+        input.focus();
+
+        let isSaved = false;
+
+        // Save logic
+        function saveEdit() {
+            if (isSaved) return; // Prevent double save (blur + enter)
+            isSaved = true;
+
+            const newText = input.value.trim();
+            if (newText && newText !== currentText) {
+                todos = todos.map(t => t.id === id ? { ...t, text: newText } : t);
+                saveTodos();
+            }
+            renderTodos();
+        }
+
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                saveEdit();
+            }
+        });
+
+        // Save on blur
+        input.addEventListener('blur', saveEdit);
     }
 
     // Clear Completed
