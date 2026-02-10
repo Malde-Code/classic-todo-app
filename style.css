@@ -398,6 +398,59 @@ select:focus {
     color: var(--danger-color);
 }
 
+/* Completing animation */
+.todo-item.completing {
+    animation: completeSlideOut 800ms ease forwards;
+}
+
+.todo-item.completing .todo-text {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+}
+
+.todo-item.completing .custom-checkbox {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+@keyframes completeSlideOut {
+    0% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    50% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateX(30px);
+        max-height: 0;
+        padding: 0;
+        margin: 0;
+        border: none;
+        overflow: hidden;
+    }
+}
+
+/* Delete animation */
+.todo-item.removing {
+    animation: removeSlideOut 300ms ease forwards;
+}
+
+@keyframes removeSlideOut {
+    to {
+        opacity: 0;
+        transform: translateX(-30px);
+        max-height: 0;
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+    }
+}
+
 .empty-state {
     text-align: center;
     color: var(--text-secondary);

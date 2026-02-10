@@ -225,14 +225,29 @@ function addTodo() {
 }
 
 function toggleTodo(id) {
-    todos = todos.map(todo => {
-        if (todo.id === id) {
-            return { ...todo, completed: !todo.completed };
+    const todo = todos.find(t => t.id === id);
+    if (!todo) return;
+
+    const willComplete = !todo.completed;
+
+    if (willComplete && currentFilter === 'all') {
+        // Animate out, then update
+        const li = todoList.querySelector(`[data-id="${id}"]`);
+        if (li) {
+            li.classList.add('completing');
+            setTimeout(() => {
+                todos = todos.map(t => t.id === id ? { ...t, completed: true } : t);
+                saveTodos();
+                renderTodos();
+            }, 800);
+            return;
         }
-        return todo;
-    });
+    }
+
+    // Uncompleting or toggling in other filters — instant
+    todos = todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
     saveTodos();
-    renderTodos(); // Re-render to sort
+    renderTodos();
 }
 
 function deleteTodo(id, liElement) {
@@ -350,11 +365,18 @@ function renderTodos() {
     todoList.innerHTML = '';
 
     let filteredTodos = todos;
-    if (currentFilter === 'active') {
+    if (currentFilter === 'all') {
+        filteredTodos = todos.filter(t => !t.completed);
+    } else if (currentFilter === 'active') {
         filteredTodos = todos.filter(t => !t.completed);
     } else if (currentFilter === 'completed') {
         filteredTodos = todos.filter(t => t.completed);
     }
+
+    // Update completed count badge on the filter button
+    const completedCount = todos.filter(t => t.completed).length;
+    const completedBtn = document.querySelector('[data-filter="completed"]');
+    completedBtn.textContent = completedCount > 0 ? `Completed (${completedCount})` : 'Completed';
 
     // Sort: Active first, then by priority (High > Medium > Low)
     const priorityOrder = { high: 0, medium: 1, low: 2 };
