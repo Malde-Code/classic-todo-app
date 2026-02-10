@@ -44,6 +44,8 @@ let currentFilter = 'all';
 let currentUser = null;
 let unsubscribeFirestore = null; // To stop listening when logging out
 
+const authError = document.getElementById('authError');
+
 // --- AUTH UI LOGIC ---
 
 let isLoginMode = true;
@@ -66,11 +68,13 @@ authSwitchLink.addEventListener('click', toggleAuthMode);
 function openModal() {
     authModal.classList.remove('hidden');
     todoInput.blur(); // Remove focus from main input
+    authError.textContent = ''; // Clear errors
 }
 
 function closeModal() {
     authModal.classList.add('hidden');
     authForm.reset();
+    authError.textContent = '';
     isLoginMode = true;
     updateModalUI();
 }
@@ -78,17 +82,18 @@ function closeModal() {
 function toggleAuthMode(e) {
     if (e) e.preventDefault();
     isLoginMode = !isLoginMode;
+    authError.textContent = '';
     updateModalUI();
 }
 
 function updateModalUI() {
     if (isLoginMode) {
-        modalTitle.textContent = "Login";
+        modalTitle.textContent = "Welcome Back";
         modalSubmitBtn.textContent = "Login";
         authSwitchText.textContent = "Don't have an account?";
         authSwitchLink.textContent = "Sign up";
     } else {
-        modalTitle.textContent = "Sign Up";
+        modalTitle.textContent = "Create Account";
         modalSubmitBtn.textContent = "Sign Up";
         authSwitchText.textContent = "Already have an account?";
         authSwitchLink.textContent = "Login";
@@ -99,6 +104,7 @@ authForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const email = authEmail.value;
     const password = authPassword.value;
+    authError.textContent = ''; // Clear previous errors
 
     if (isLoginMode) {
         signInWithEmailAndPassword(auth, email, password)
@@ -106,7 +112,11 @@ authForm.addEventListener('submit', (e) => {
                 closeModal();
             })
             .catch((error) => {
-                alert("Login failed: " + error.message);
+                console.error("Login failed", error);
+                let msg = "Login failed. Check your email/password.";
+                if (error.code === 'auth/invalid-credential') msg = "Invalid email or password.";
+                if (error.code === 'auth/too-many-requests') msg = "Too many attempts. Try again later.";
+                authError.textContent = msg;
             });
     } else {
         createUserWithEmailAndPassword(auth, email, password)
@@ -114,7 +124,11 @@ authForm.addEventListener('submit', (e) => {
                 closeModal();
             })
             .catch((error) => {
-                alert("Signup failed: " + error.message);
+                console.error("Signup failed", error);
+                let msg = "Signup failed. " + error.message;
+                if (error.code === 'auth/email-already-in-use') msg = "Email already in use.";
+                if (error.code === 'auth/weak-password') msg = "Password should be at least 6 characters.";
+                authError.textContent = msg;
             });
     }
 });
