@@ -24,7 +24,7 @@ const todoPriority = document.getElementById('todoPriority');
 const addBtn = document.getElementById('addBtn');
 const todoList = document.getElementById('todoList');
 const filterBtns = document.querySelectorAll('.filter-btn');
-const clearCompletedBtn = document.getElementById('clearCompletedBtn');
+
 const emptyState = document.getElementById('emptyState');
 const userBar = document.getElementById('userBar');
 const authBtn = document.getElementById('authBtn');
@@ -343,11 +343,7 @@ function attachItemListeners(li, todo) {
     textSpan.addEventListener('dblclick', () => editTodo(todo.id, textSpan));
 }
 
-function clearCompleted() {
-    todos = todos.filter(t => !t.completed);
-    saveTodos();
-    renderTodos();
-}
+
 
 // Render Logic
 function renderTodos() {
@@ -456,7 +452,7 @@ filterBtns.forEach(btn => {
     });
 });
 
-clearCompletedBtn.addEventListener('click', clearCompleted);
+
 
 // Initial Render (will be overridden by Auth observer if logged in)
 loadTodosFromLocal();

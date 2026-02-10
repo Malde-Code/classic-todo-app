@@ -484,23 +484,155 @@ input[type="date"] {
     background: rgba(239, 68, 68, 0.4);
 }
 
-@media (max-width: 480px) {
+/* ===== RESPONSIVE: Tablet (≤768px) ===== */
+@media (max-width: 768px) {
+    body {
+        padding: 12px;
+        align-items: flex-start;
+    }
+
     .app-container {
-        padding: 20px;
+        padding: 24px;
         max-width: 100%;
-        border: none;
-        border-radius: 0;
+        border-radius: var(--radius-lg);
+    }
+
+    header h1 {
+        font-size: 26px;
+    }
+
+    .input-group {
+        flex-wrap: wrap;
     }
 
     input[type="text"] {
         flex: 1 1 100%;
-        /* Stack on mobile */
+        min-width: unset;
     }
 
     input[type="date"],
-    select,
-    #addBtn {
+    select {
         flex: 1;
+    }
+
+    #addBtn {
+        width: 46px;
+        flex: 0 0 46px;
+    }
+
+    .todo-item-actions {
+        opacity: 1;
+    }
+
+    .todo-item:hover {
+        transform: none;
+    }
+}
+
+/* ===== RESPONSIVE: Smartphone (≤480px) ===== */
+@media (max-width: 480px) {
+    body {
+        padding: 0;
+        align-items: stretch;
+        min-height: 100dvh;
+    }
+
+    .app-container {
+        padding: 16px;
+        border: none;
+        border-radius: 0;
+        min-height: 100dvh;
+        gap: 16px;
+    }
+
+    header h1 {
+        font-size: 22px;
+    }
+
+    .user-bar {
+        margin-bottom: 12px;
+        padding: 0;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .user-bar span {
+        font-size: 12px;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    #authBtn {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+
+    .input-group {
+        gap: 6px;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    select {
+        padding: 10px 12px;
+        font-size: 16px;
+        /* Prevents iOS zoom on focus */
+    }
+
+    input[type="date"],
+    select {
+        flex: 1 1 calc(50% - 30px);
+    }
+
+    #addBtn {
+        width: 42px;
+        height: 42px;
+        flex: 0 0 42px;
+    }
+
+    .filters {
+        justify-content: center;
+    }
+
+    .filter-btn {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+
+    .todo-item {
+        padding: 10px 12px;
+    }
+
+    .todo-text {
+        font-size: 14px;
+    }
+
+    .todo-item-actions {
+        opacity: 1;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .edit-btn,
+    .delete-btn {
+        padding: 6px;
+    }
+
+    .edit-meta-group {
+        flex-direction: column;
+    }
+
+    /* Modal on mobile */
+    .modal-content {
+        width: 95%;
+        padding: 24px;
+        border-radius: var(--radius-md);
+    }
+
+    .modal-content h2 {
+        font-size: 20px;
     }
 }
 
