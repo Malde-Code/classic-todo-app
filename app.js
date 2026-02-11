@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, updatePassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- FIREBASE CONFIGURATION ---
@@ -38,6 +38,14 @@ const modalSubmitBtn = document.getElementById('modalSubmitBtn');
 const authSwitchText = document.getElementById('authSwitchText');
 const authSwitchLink = document.getElementById('authSwitchLink');
 
+const settingsView = document.getElementById('settingsView');
+const profileForm = document.getElementById('profileForm');
+const displayNameInput = document.getElementById('displayName');
+const passwordForm = document.getElementById('passwordForm');
+const newPasswordInput = document.getElementById('newPassword');
+const authBtnSidebar = document.getElementById('authBtnSidebar');
+const authBtnSettings = document.getElementById('authBtnSettings');
+
 // State
 let todos = [];
 let notes = [];
@@ -54,7 +62,7 @@ const authError = document.getElementById('authError');
 
 let isLoginMode = true;
 
-authBtn.addEventListener('click', () => {
+function handleAuthClick() {
     if (currentUser) {
         signOut(auth).then(() => {
             console.log("Logged out");
@@ -64,7 +72,12 @@ authBtn.addEventListener('click', () => {
     } else {
         openModal();
     }
-});
+}
+
+authBtnSidebar.addEventListener('click', handleAuthClick);
+if (authBtnSettings) {
+    authBtnSettings.addEventListener('click', handleAuthClick);
+}
 
 closeModalBtn.addEventListener('click', closeModal);
 authSwitchLink.addEventListener('click', toggleAuthMode);
@@ -144,15 +157,23 @@ onAuthStateChanged(auth, (user) => {
     if (user) {
         // User is signed in
         const userEmailSpan = userBar.querySelector('.user-email');
-        if (userEmailSpan) userEmailSpan.textContent = user.email;
-        authBtn.textContent = "Logout";
+        if (userEmailSpan) userEmailSpan.textContent = user.displayName || user.email;
+
+        authBtnSidebar.textContent = "Logout";
+        if (authBtnSettings) authBtnSettings.textContent = "Logout";
+
+        if (displayNameInput) displayNameInput.value = user.displayName || '';
+
         loadTodosFromFirestore();
         loadNotesFromFirestore();
     } else {
         // User is signed out
         const userEmailSpan = userBar.querySelector('.user-email');
         if (userEmailSpan) userEmailSpan.textContent = "Guest Mode";
-        authBtn.textContent = "Login / Signup";
+
+        authBtnSidebar.textContent = "Login / Signup";
+        if (authBtnSettings) authBtnSettings.textContent = "Login / Signup";
+
         if (unsubscribeFirestore) {
             unsubscribeFirestore();
             unsubscribeFirestore = null;
@@ -522,14 +543,11 @@ function switchView(view) {
     });
 
     // Toggle Sections (Strict Exclusivity)
-    if (view === 'todo') {
-        todoView.classList.remove('hidden');
-        notesView.classList.add('hidden');
-    } else {
-        todoView.classList.add('hidden');
-        notesView.classList.remove('hidden');
-        renderNotes();
-    }
+    todoView.classList.toggle('hidden', view !== 'todo');
+    notesView.classList.toggle('hidden', view !== 'notes');
+    settingsView.classList.toggle('hidden', view !== 'settings');
+
+    if (view === 'notes') renderNotes();
 
     // UI Polish: Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -669,6 +687,52 @@ addNoteBtn.addEventListener('click', addNote);
 saveNoteBtn.addEventListener('click', saveNote);
 deleteNoteBtn.addEventListener('click', deleteNote);
 downloadNoteBtn.addEventListener('click', downloadNote);
+
+// --- SETTINGS LOGIC ---
+if (profileForm) {
+    profileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentUser) return;
+
+        const newName = displayNameInput.value.trim();
+        try {
+            await updateProfile(currentUser, { displayName: newName });
+            alert("Profile updated successfully!");
+            // Update UI
+            const userEmailSpan = userBar.querySelector('.user-email');
+            if (userEmailSpan) userEmailSpan.textContent = newName || currentUser.email;
+        } catch (error) {
+            console.error("Profile update error", error);
+            alert("Error updating profile: " + error.message);
+        }
+    });
+}
+
+if (passwordForm) {
+    passwordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentUser) return;
+
+        const newPass = newPasswordInput.value;
+        if (newPass.length < 6) {
+            alert("Password should be at least 6 characters.");
+            return;
+        }
+
+        try {
+            await updatePassword(currentUser, newPass);
+            alert("Password changed successfully!");
+            newPasswordInput.value = '';
+        } catch (error) {
+            console.error("Password update error", error);
+            if (error.code === 'auth/requires-recent-login') {
+                alert("Please log out and log back in to change your password for security reasons.");
+            } else {
+                alert("Error updating password: " + error.message);
+            }
+        }
+    });
+}
 
 // Initial Listeners — use form submit so the mobile keyboard action button works
 const todoForm = document.getElementById('todoForm');
