@@ -200,6 +200,11 @@ function loadTodosFromFirestore() {
     });
 }
 
+// Helper: detect mobile/touch devices
+function isMobileDevice() {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 768;
+}
+
 function addTodo() {
     const text = todoInput.value.trim();
     const date = todoDate.value;
@@ -220,7 +225,13 @@ function addTodo() {
 
         // Reset Inputs
         todoInput.value = '';
-        todoInput.focus();
+
+        // On mobile: blur to dismiss keyboard; on desktop: keep focus for rapid entry
+        if (isMobileDevice()) {
+            todoInput.blur();
+        } else {
+            todoInput.focus();
+        }
     }
 }
 
@@ -465,10 +476,20 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Initial Listeners
-addBtn.addEventListener('click', addTodo);
-todoInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') addTodo();
+// Initial Listeners — use form submit so the mobile keyboard action button works
+const todoForm = document.getElementById('todoForm');
+todoForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    addTodo();
+});
+
+// Also allow Enter on date & priority to add (they're inside the form, so submit handles it)
+// But add explicit handlers for select (some browsers don't submit on Enter in select)
+todoPriority.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addTodo();
+    }
 });
 
 filterBtns.forEach(btn => {

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
     <title>Classic To-Do</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,16 +21,17 @@
 
         <header>
             <h1>Classic To-Do</h1>
-            <div class="input-group">
-                <input type="text" id="todoInput" placeholder="Add a new task...">
-                <input type="date" id="todoDate">
+            <form id="todoForm" class="input-group" action="javascript:void(0)">
+                <input type="text" id="todoInput" placeholder="Add a new task..." enterkeyhint="send"
+                    autocomplete="off">
+                <input type="date" id="todoDate" enterkeyhint="send">
                 <select id="todoPriority">
                     <option value="low">Low</option>
                     <option value="medium" selected>Medium</option>
                     <option value="high">High</option>
                 </select>
-                <button id="addBtn">Add</button>
-            </div>
+                <button type="submit" id="addBtn">Add</button>
+            </form>
             <div class="filters">
                 <button class="filter-btn active" data-filter="all">Active</button>
                 <button class="filter-btn" data-filter="completed">Completed</button>

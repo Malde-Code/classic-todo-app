@@ -99,6 +99,11 @@ header h1 {
     /* Wrap on small screens */
 }
 
+/* Ensure form doesn't add default margins */
+form.input-group {
+    margin: 0;
+}
+
 input[type="text"],
 input[type="date"],
 select {
@@ -685,6 +690,43 @@ input[type="date"] {
 
     .edit-meta-group {
         flex-direction: column;
+    }
+
+    /* Better touch targets — minimum 44px for all interactive elements */
+    .edit-btn,
+    .delete-btn {
+        padding: 6px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .checkbox-wrapper {
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Prevent double-tap zoom on interactive elements */
+    button,
+    input,
+    select,
+    a,
+    label {
+        touch-action: manipulation;
+    }
+
+    /* Safe area for notched phones */
+    .app-container {
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
+    }
+
+    /* Smooth scroll for todo list */
+    #todoList {
+        -webkit-overflow-scrolling: touch;
     }
 
     /* Modal on mobile */
