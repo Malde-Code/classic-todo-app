@@ -506,18 +506,22 @@ function escapeHtml(text) {
 const sidebar = document.getElementById('sidebar');
 const menuBtn = document.getElementById('menuBtn');
 const sidebarToggle = document.getElementById('sidebarToggle');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
 const navItems = document.querySelectorAll('.nav-item');
 const todoView = document.getElementById('todoView');
 const notesView = document.getElementById('notesView');
 
 function switchView(view) {
+    if (currentView === view && !isMobileDevice()) return;
+
     currentView = view;
 
+    // Update Nav UI
     navItems.forEach(item => {
-        const isActive = item.dataset.view === view;
-        item.classList.toggle('active', isActive);
+        item.classList.toggle('active', item.dataset.view === view);
     });
 
+    // Toggle Sections (Strict Exclusivity)
     if (view === 'todo') {
         todoView.classList.remove('hidden');
         notesView.classList.add('hidden');
@@ -527,28 +531,39 @@ function switchView(view) {
         renderNotes();
     }
 
-    // Auto-close sidebar on mobile
-    if (window.innerWidth <= 900) {
-        sidebar.classList.remove('open');
-    }
+    // UI Polish: Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Auto-close sidebar
+    closeSidebar();
+}
+
+function openSidebar() {
+    sidebar.classList.add('open');
+    sidebarOverlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Prevent background scroll
+}
+
+function closeSidebar() {
+    sidebar.classList.remove('open');
+    sidebarOverlay.classList.add('hidden');
+    document.body.style.overflow = '';
 }
 
 navItems.forEach(item => {
-    item.addEventListener('click', () => {
-        switchView(item.dataset.view);
-    });
+    item.addEventListener('click', () => switchView(item.dataset.view));
 });
 
 if (menuBtn) {
-    menuBtn.addEventListener('click', () => {
-        sidebar.classList.add('open');
-    });
+    menuBtn.addEventListener('click', openSidebar);
 }
 
 if (sidebarToggle) {
-    sidebarToggle.addEventListener('click', () => {
-        sidebar.classList.remove('open');
-    });
+    sidebarToggle.addEventListener('click', closeSidebar);
+}
+
+if (sidebarOverlay) {
+    sidebarOverlay.addEventListener('click', closeSidebar);
 }
 
 // --- NOTES LOGIC ---
