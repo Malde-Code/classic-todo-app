@@ -367,16 +367,22 @@ function renderTodos() {
     let filteredTodos = todos;
     if (currentFilter === 'all') {
         filteredTodos = todos.filter(t => !t.completed);
-    } else if (currentFilter === 'active') {
-        filteredTodos = todos.filter(t => !t.completed);
     } else if (currentFilter === 'completed') {
         filteredTodos = todos.filter(t => t.completed);
     }
 
     // Update completed count badge on the filter button
     const completedCount = todos.filter(t => t.completed).length;
-    const completedBtn = document.querySelector('[data-filter="completed"]');
-    completedBtn.textContent = completedCount > 0 ? `Completed (${completedCount})` : 'Completed';
+    const completedFilterBtn = document.querySelector('[data-filter="completed"]');
+    completedFilterBtn.textContent = completedCount > 0 ? `Completed (${completedCount})` : 'Completed';
+
+    // Show/hide clear completed button
+    const clearBtn = document.getElementById('clearCompletedBtn');
+    if (currentFilter === 'completed' && completedCount > 0) {
+        clearBtn.classList.remove('hidden');
+    } else {
+        clearBtn.classList.add('hidden');
+    }
 
     // Sort: Active first, then by priority (High > Medium > Low)
     const priorityOrder = { high: 0, medium: 1, low: 2 };
@@ -474,7 +480,11 @@ filterBtns.forEach(btn => {
     });
 });
 
-
+document.getElementById('clearCompletedBtn').addEventListener('click', () => {
+    todos = todos.filter(t => !t.completed);
+    saveTodos();
+    renderTodos();
+});
 
 // Initial Render (will be overridden by Auth observer if logged in)
 loadTodosFromLocal();
