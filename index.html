@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <title>Classic To-Do</title>
+    <title>Tasks & Notes</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -16,7 +16,7 @@
         <div class="app-container">
             <section id="todoView">
                 <header>
-                    <h1>Classic To-Do</h1>
+                    <h1>Tasks</h1>
                     <form id="todoForm" class="input-group" action="javascript:void(0)">
                         <input type="text" id="todoInput" placeholder="Add a new task..." enterkeyhint="send"
                             autocomplete="off">
@@ -44,7 +44,7 @@
 
             <section id="notesView" class="hidden">
                 <header>
-                    <h1>Quick Notes</h1>
+                    <h1>Notes</h1>
                     <div class="notes-controls">
                         <button id="addNoteBtn" class="primary-btn">New Note</button>
                     </div>
@@ -77,6 +77,12 @@
                     </svg>
                     <span>Pulse</span>
                 </div>
+                <div id="userBar" class="user-bar">
+                    <div class="user-info">
+                        <span class="user-email">Guest Mode</span>
+                    </div>
+                    <button id="authBtn" class="auth-pill">Login / Signup</button>
+                </div>
                 <button id="sidebarToggle" class="sidebar-toggle-mobile" aria-label="Close menu">&times;</button>
             </div>
 
@@ -101,12 +107,7 @@
             </nav>
 
             <div class="sidebar-footer">
-                <div id="userBar" class="user-bar">
-                    <div class="user-info">
-                        <span class="user-email">Guest Mode</span>
-                    </div>
-                    <button id="authBtn">Login / Signup</button>
-                </div>
+                <p class="footer-tagline">Manage your life with ease.</p>
             </div>
         </aside>
     </div>
