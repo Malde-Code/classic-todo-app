@@ -40,9 +40,13 @@ const authSwitchLink = document.getElementById('authSwitchLink');
 
 // State
 let todos = [];
+let notes = [];
 let currentFilter = 'all';
+let currentView = 'todo'; // 'todo' | 'notes'
+let currentNoteId = null;
 let currentUser = null;
 let unsubscribeFirestore = null; // To stop listening when logging out
+let unsubscribeNotes = null;
 
 const authError = document.getElementById('authError');
 
@@ -139,18 +143,26 @@ onAuthStateChanged(auth, (user) => {
     currentUser = user;
     if (user) {
         // User is signed in
-        userBar.querySelector('span').textContent = `Logged in as: ${user.email}`;
+        const userEmailSpan = userBar.querySelector('.user-email');
+        if (userEmailSpan) userEmailSpan.textContent = user.email;
         authBtn.textContent = "Logout";
         loadTodosFromFirestore();
+        loadNotesFromFirestore();
     } else {
         // User is signed out
-        userBar.querySelector('span').textContent = "Guest Mode (Local Storage)";
+        const userEmailSpan = userBar.querySelector('.user-email');
+        if (userEmailSpan) userEmailSpan.textContent = "Guest Mode";
         authBtn.textContent = "Login / Signup";
         if (unsubscribeFirestore) {
             unsubscribeFirestore();
             unsubscribeFirestore = null;
         }
+        if (unsubscribeNotes) {
+            unsubscribeNotes();
+            unsubscribeNotes = null;
+        }
         loadTodosFromLocal();
+        loadNotesFromLocal();
     }
 });
 
@@ -158,44 +170,58 @@ onAuthStateChanged(auth, (user) => {
 
 function loadTodosFromLocal() {
     const storedTodos = localStorage.getItem('todos');
-    if (storedTodos) {
-        todos = JSON.parse(storedTodos);
-    } else {
-        todos = [];
-    }
+    todos = storedTodos ? JSON.parse(storedTodos) : [];
     renderTodos();
+}
+
+function loadNotesFromLocal() {
+    const storedNotes = localStorage.getItem('notes');
+    notes = storedNotes ? JSON.parse(storedNotes) : [];
+    renderNotes();
 }
 
 function saveTodos() {
     if (currentUser) {
-        // Save to Firestore
         const userDocRef = doc(db, "users", currentUser.uid);
         setDoc(userDocRef, { todos: todos }, { merge: true })
-            .catch((error) => console.error("Error saving to cloud:", error));
+            .catch((error) => console.error("Error saving todos:", error));
     } else {
-        // Save to LocalStorage
         localStorage.setItem('todos', JSON.stringify(todos));
+    }
+}
+
+function saveNotes() {
+    if (currentUser) {
+        const userDocRef = doc(db, "users", currentUser.uid);
+        setDoc(userDocRef, { notes: notes }, { merge: true })
+            .catch((error) => console.error("Error saving notes:", error));
+    } else {
+        localStorage.setItem('notes', JSON.stringify(notes));
     }
 }
 
 function loadTodosFromFirestore() {
     const userDocRef = doc(db, "users", currentUser.uid);
-    // Real-time listener
     unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
         if (doc.exists()) {
-            const data = doc.data();
-            todos = data.todos || [];
+            todos = doc.data().todos || [];
             renderTodos();
         } else {
-            // New user, no data yet
             todos = [];
             renderTodos();
         }
-    }, (error) => {
-        console.error("Firestore sync error:", error);
-        // Fallback or alert if config is bad
-        if (error.code === 'permission-denied' || error.code === 'unavailable') {
-            console.warn("Check your Firebase Config/Rules");
+    });
+}
+
+function loadNotesFromFirestore() {
+    const userDocRef = doc(db, "users", currentUser.uid);
+    unsubscribeNotes = onSnapshot(userDocRef, (doc) => {
+        if (doc.exists()) {
+            notes = doc.data().notes || [];
+            renderNotes();
+        } else {
+            notes = [];
+            renderNotes();
         }
     });
 }
@@ -476,21 +502,178 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// --- NAVIGATION ---
+const sidebar = document.getElementById('sidebar');
+const menuBtn = document.getElementById('menuBtn');
+const sidebarToggle = document.getElementById('sidebarToggle');
+const navItems = document.querySelectorAll('.nav-item');
+const todoView = document.getElementById('todoView');
+const notesView = document.getElementById('notesView');
+
+function switchView(view) {
+    currentView = view;
+
+    navItems.forEach(item => {
+        const isActive = item.dataset.view === view;
+        item.classList.toggle('active', isActive);
+    });
+
+    if (view === 'todo') {
+        todoView.classList.remove('hidden');
+        notesView.classList.add('hidden');
+    } else {
+        todoView.classList.add('hidden');
+        notesView.classList.remove('hidden');
+        renderNotes();
+    }
+
+    // Auto-close sidebar on mobile
+    if (window.innerWidth <= 900) {
+        sidebar.classList.remove('open');
+    }
+}
+
+navItems.forEach(item => {
+    item.addEventListener('click', () => {
+        switchView(item.dataset.view);
+    });
+});
+
+if (menuBtn) {
+    menuBtn.addEventListener('click', () => {
+        sidebar.classList.add('open');
+    });
+}
+
+if (sidebarToggle) {
+    sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+    });
+}
+
+// --- NOTES LOGIC ---
+const notesList = document.getElementById('notesList');
+const noteEditor = document.getElementById('noteEditor');
+const notesEmptyState = document.getElementById('notesEmptyState');
+const noteTitleInput = document.getElementById('noteTitle');
+const noteContentInput = document.getElementById('noteContent');
+const addNoteBtn = document.getElementById('addNoteBtn');
+const saveNoteBtn = document.getElementById('saveNoteBtn');
+const deleteNoteBtn = document.getElementById('deleteNoteBtn');
+const downloadNoteBtn = document.getElementById('downloadNoteBtn');
+
+function renderNotes() {
+    notesList.innerHTML = '';
+    notes.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+    notes.forEach(note => {
+        const li = document.createElement('li');
+        li.className = `note-item ${currentNoteId === note.id ? 'active' : ''}`;
+        li.innerHTML = `
+            <h4>${escapeHtml(note.title || 'Untitled Note')}</h4>
+            <p>${escapeHtml(note.content.substring(0, 30))}${note.content.length > 30 ? '...' : ''}</p>
+        `;
+        li.addEventListener('click', () => openNote(note.id));
+        notesList.appendChild(li);
+    });
+}
+
+function openNote(id) {
+    currentNoteId = id;
+    const note = notes.find(n => n.id === id);
+    if (!note) return;
+
+    noteTitleInput.value = note.title;
+    noteContentInput.value = note.content;
+
+    noteEditor.classList.remove('hidden');
+    notesEmptyState.classList.add('hidden');
+    renderNotes();
+}
+
+function addNote() {
+    const newNote = {
+        id: Date.now().toString(),
+        title: '',
+        content: '',
+        updatedAt: new Date().toISOString()
+    };
+    notes.unshift(newNote);
+    saveNotes();
+    openNote(newNote.id);
+}
+
+function saveNote() {
+    if (!currentNoteId) return;
+
+    notes = notes.map(n => n.id === currentNoteId ? {
+        ...n,
+        title: noteTitleInput.value,
+        content: noteContentInput.value,
+        updatedAt: new Date().toISOString()
+    } : n);
+
+    saveNotes();
+    renderNotes();
+
+    // Visual feedback
+    const originalText = saveNoteBtn.textContent;
+    saveNoteBtn.textContent = "Saved!";
+    setTimeout(() => saveNoteBtn.textContent = originalText, 2000);
+}
+
+function deleteNote() {
+    if (!currentNoteId || !confirm("Are you sure you want to delete this note?")) return;
+
+    notes = notes.filter(n => n.id !== currentNoteId);
+    currentNoteId = null;
+    saveNotes();
+
+    noteEditor.classList.add('hidden');
+    notesEmptyState.classList.remove('hidden');
+    renderNotes();
+}
+
+function downloadNote() {
+    if (!currentNoteId) return;
+    const note = notes.find(n => n.id === currentNoteId);
+    if (!note) return;
+
+    const blob = new Blob([note.content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${note.title || 'note'}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+addNoteBtn.addEventListener('click', addNote);
+saveNoteBtn.addEventListener('click', saveNote);
+deleteNoteBtn.addEventListener('click', deleteNote);
+downloadNoteBtn.addEventListener('click', downloadNote);
+
 // Initial Listeners — use form submit so the mobile keyboard action button works
 const todoForm = document.getElementById('todoForm');
-todoForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    addTodo();
-});
+if (todoForm) {
+    todoForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        addTodo();
+    });
+}
 
 // Also allow Enter on date & priority to add (they're inside the form, so submit handles it)
 // But add explicit handlers for select (some browsers don't submit on Enter in select)
-todoPriority.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        addTodo();
-    }
-});
+if (todoPriority) {
+    todoPriority.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addTodo();
+        }
+    });
+}
 
 filterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -509,3 +692,4 @@ document.getElementById('clearCompletedBtn').addEventListener('click', () => {
 
 // Initial Render (will be overridden by Auth observer if logged in)
 loadTodosFromLocal();
+loadNotesFromLocal();
